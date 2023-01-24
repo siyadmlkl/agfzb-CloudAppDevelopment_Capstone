@@ -23,6 +23,9 @@
         <td>{{dealership.address}}</td>
         <td>{{dealership.zip}}</td>
         <td>{{dealership.st}}</td>
+        {% if user.is_authenticated %}
+        <td><a href="id/{{dealership.id}}">Review</a></td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>

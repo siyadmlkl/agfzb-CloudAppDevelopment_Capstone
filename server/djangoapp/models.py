@@ -23,7 +23,7 @@ class CarModel(models.Model):
     make=models.ManyToManyField(CarMake)
 
     def __str__(self):
-        return "Model : "+self.name+", "+self.make+","+self.year
+        return "Model : "+self.name
 
 #Dealer object class
 class CarDealer:
@@ -53,19 +53,14 @@ class CarDealer:
 
 # Dealer review class
 class DealerReview():
-    def __init__(self, dealership, name, purchase, review):
+    def __init__(self, dealership, name, purchase, review, purchase_date, car_model):
         # Required attributes
         self.dealership = dealership
         self.name = name
         self.purchase = purchase
         self.review = review
-        # Optional attributes
-        self.purchase_date = ""
-        self.purchase_make = ""
-        self.purchase_model = ""
-        self.purchase_year = ""
-        self.sentiment = ""
-        self.id = ""
+        self.purchase_date = purchase_date
+        self.car_model = car_model
 
     def __str__(self):
         return "Review: " + self.review

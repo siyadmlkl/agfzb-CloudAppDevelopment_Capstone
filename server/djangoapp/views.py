@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import CarMake,CarModel,DealerReview
-from .restapis import get_dealers_from_cf, get_dealers_for_id,get_dealers_for_st,get_review
+from .restapis import get_dealers_from_cf, get_dealers_for_id,get_dealers_for_st,get_review,post_request
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
@@ -100,10 +100,8 @@ def get_dealerships_by_id(request, id):
         url = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/dealership-package/get-dealership-async"
         # Get dealers from the URL
         dealerships = get_dealers_for_id(url,id)
-        # Concat all dealer's short name
-        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
-        # Return a list of dealer short name
-        return render(request, 'djangoapp/index.html',{"dealerships":dealerships})
+        models=CarModel.objects.all().values()
+        return render(request, 'djangoapp/postreview.html',{"dealerships":dealerships,"models":models,"id":id})
 
 #View for reviews
 def get_dealer_review(request, dealership):
@@ -114,17 +112,28 @@ def get_dealer_review(request, dealership):
         return render(request, 'djangoapp/review.html', {'review':review})
      
 #View for posting review
-def post_review(request):
-    return render(request, 'djangoapp/postreview.html')
-
-    '''
-    review=dict()
-    review["time"] = datetime.utcnow().isoformat()
-    review["name"]="Kelly"
-    review["dealership"] = 11
-    review["review"] = "This is a great car dealer"
-    review["purchase"]="No"
-    json_payload = json.dumps()
-    '''
+def post_review(request,id):
+    models=CarModel.objects.all().values()
+    id=id
+    if request.method=='POST':
+        json_review={}
+        dealership= id
+        purchase_date = request.POST['purchase_date']
+        car_model= request.POST['car_model']
+        if request.POST['purchase_date']:
+            purchase= "Yes"
+        else:
+            purchase= "No"
+        review_= request.POST['review']
+        name=request.user.username
+        review = DealerReview(dealership=dealership,name=name,purchase=purchase,\
+                                review=review_, purchase_date=purchase_date,car_model=car_model)
+        json_= review.__dict__
+        json_review['review']=json_
+        url="https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/review-package/post-review"
+        r = post_request(url,json_review)
+        return redirect('/djangoapp')
+    
+    return render(request, 'djangoapp/postreview.html',{'models':models,'id':id})
 
 

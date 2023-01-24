@@ -1,11 +1,39 @@
 {% extends 'djangoapp/base.html' %} {% block content %}
- {% if user.is_authenticated %}
-<div class="card col-8" style="margin: auto; padding: 1rem">
-  <h5>Add a review about <strong>Great Car Dealers</strong></h5>
-  <form method="post" class="form form-floating">
-    {% csrf_tocken %}
+
+ <div class="container col-8" style="display: block;">
+  <div class="card">
+  <h3>Car Dealer Details</h3>
+  <table class="table">
+    <thead>
+      <tr>
+      <th scope="col">Dealer Id</th>
+      <th scope="col">Full Name</th>
+      <th scope="col">Short Name</th>
+      <th scope="col">Address</th>
+      <th scope="col">Zip</th>
+      <th scope="col">State</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for dealership in dealerships %}
+      <tr scope="row">
+        <td>{{dealership.id}}</td>
+        <td>{{dealership.full_name}}</td>
+        <td>{{dealership.short_name}}</td>
+        <td>{{dealership.address}}</td>
+        <td>{{dealership.zip}}</td>
+        <td>{{dealership.st}}</td>
+      </tr>
+     {% endfor %}
+    </tbody>
+    <table>
+</table>
+</div><br>
+{% if user.is_authenticated %}
+  <h5>Add a review about <strong>Great Car Dealers (Id - {{id}})</strong></h5>
+  <form method="post" action="/djangoapp/postreview/{{id}}" class="form">
+    {% csrf_token %}
     <div class="form-group">
-      <label for="review">Enter Your Review</label>
       <textarea
         name="review"
         class="form-control"
@@ -17,23 +45,20 @@
         <input type="checkbox" name="purchase" class="form-check-input">
         <label for="purchase">Purchased from Great Car Dealers</label>
     </div>
-    <div class="form-check">
+    <div class="form-check form-inline">
         <label for="purchase">Purchase Date</label>
-        <input type="date" name="purchase" class="sr">
-    </div>
-    <div class="form-inline col-5">
-        <label for="car_model" style="margin-right: 3px;">Car Model </label>
-        <select class="custom-select custom-select-sm">
-            <option selected>Open this select menu</option>
-            <option value="1">One</option>
-            <option value="2">Two</option>
-            <option value="3">Three</option>
+        <input type="date" name="purchase_date" style="margin-right:2rem">
+        <label for="car_model" style="margin-right: 3px; margin-left: 3rem;">Car Model </label>
+        <select class="custom-select custom-select-sm" name="car_model" style="margin-left: 3px;">
+            <option selected disabled>Select Model</option>
+            {% for model in models %}
+            <option value="{{model.name}}">{{model.name}}</option>
+            {% endfor %}
           </select>
     </div>
     <input type="submit" class="btn- btn-sm btn-primary">
   </form>
 </div>
-
+</div>
 {% endif %} 
-
 {% endblock %}
