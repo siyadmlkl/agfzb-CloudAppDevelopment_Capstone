@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
-# from .models import related models
-# from .restapis import related methods
+from .models import CarMake,CarModel,DealerReview
+from .restapis import get_dealers_from_cf, get_dealers_for_id,get_dealers_for_st,get_review
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
@@ -77,14 +77,54 @@ def registration_request(request):
 def get_dealerships(request):
     context = {}
     if request.method == "GET":
-        return render(request, 'djangoapp/index.html', context)
+        url = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/dealership-package/get-dealership-async"
+        # Get dealers from the URL
+        dealerships = get_dealers_from_cf(url)
+        # Concat all dealer's short name
+        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
+        # Return a list of dealer short name
+        return render(request, 'djangoapp/index.html',{"dealerships":dealerships})
 
+#get delaers by state
+def get_dealerships_by_st(request, state):
+    if request.method == "GET":
+        url = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/dealership-package/get-dealership-async"
+        # Get dealers from the URL
+        dealerships = get_dealers_for_st(url,state)
+        return render(request, 'djangoapp/index.html',{"dealerships":dealerships})
+       
 
-# Create a `get_dealer_details` view to render the reviews of a dealer
-# def get_dealer_details(request, dealer_id):
-# ...
+#Get dealers by id    
+def get_dealerships_by_id(request, id):
+    if request.method == "GET":
+        url = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/dealership-package/get-dealership-async"
+        # Get dealers from the URL
+        dealerships = get_dealers_for_id(url,id)
+        # Concat all dealer's short name
+        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
+        # Return a list of dealer short name
+        return render(request, 'djangoapp/index.html',{"dealerships":dealerships})
 
-# Create a `add_review` view to submit a review
-# def add_review(request, dealer_id):
-# ...
+#View for reviews
+def get_dealer_review(request, dealership):
+     if request.method == "GET":
+        review=[]
+        url = 'https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/review-package/get-reviews'
+        review = get_review(url,dealership)
+        return render(request, 'djangoapp/review.html', {'review':review})
+     
+#View for posting review
+def post_review(request):
+    return render(request, 'djangoapp/postreview.html')
+
+    '''
+    review=dict()
+    review["time"] = datetime.utcnow().isoformat()
+    review["name"]="Kelly"
+    review["dealership"] = 11
+    review["review"] = "This is a great car dealer"
+    review["purchase"]="No"
+    json_payload = json.dumps()
+    '''
+
 
