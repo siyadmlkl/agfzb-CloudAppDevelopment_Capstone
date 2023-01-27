@@ -1,16 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+{% extends 'djangoapp/base.html' %}
     {% load static %}
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/css/bootstrap-datepicker.css" rel="stylesheet">
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.5.0/js/bootstrap-datepicker.js"></script>
+    {% block content %}
 
-</head>
-    <body>
-    <!--Add review form here -->
-    </body>
-</html>
+        <div class="container card mb-5" style="margin:auto;padding: 2rem;">
+            <h4>Add review about <strong>{{dealership_name}}</strong></h4>
+        <form method="post" action="/djangoapp/addreview/{{id}}" class="form">
+            {% csrf_token %}
+            <div class="form-group">
+              <textarea
+                name="review"
+                class="form-control"
+                cols="50"
+                rows="4"
+              ></textarea>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" name="purchase" class="form-check-input">
+                <label for="purchase">Purchased from {{dealership_name}}?</label>
+            </div>
+            <div class="form-check form-inline">
+                <label for="purchase_date">Purchase Date</label>
+                <input type="date" id="date-own" name="purchase_date" style="margin-right:2rem">
+                <label for="car_model" style="margin-right: 3px; margin-left: 3rem;">Car Make-Model-Year</label>
+                <select class="custom-select custom-select-sm" name="car_model" style="margin-left: 3px;">
+                    <option selected disabled>Select Model</option>
+                    {% for model in models %}
+                    <option value="{{model.id}}">{{model.make.name}}-{{model.name}}-{{model.year|date:'Y'}}</option>
+                    {% endfor %}
+                  </select>
+            </div>
+            <input type="submit" class="btn- btn-sm btn-primary">
+          </form>
+        </div>
+{% endblock %}
+
+{% block footer%}
+<script type="text/javascript">
+    $('.date-own').datepicker({
+       format: 'mm/dd/yyyy'
+     });
+</script>
+{% endblock %}

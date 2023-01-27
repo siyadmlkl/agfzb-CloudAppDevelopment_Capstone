@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import CarMake,CarModel,DealerReview
-from .restapis import get_dealers_from_cf, get_dealers_for_id,get_dealers_for_st,get_review,post_request
+from .restapis import get_dealers_from_cf, get_dealers_for_id,get_dealers_for_st,get_reviews,post_request
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
@@ -13,8 +13,14 @@ import json
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
+#url for dealership
+urld = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/dealership-package/get-dealership-async"
 
-# Create your views here.
+#url for get review
+urlr = 'https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/review-package/get-reviews'
+
+#url for post review
+urlp = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/review-package/post-review"
 
 #About view
 def about(request):
@@ -77,9 +83,8 @@ def registration_request(request):
 def get_dealerships(request):
     context = {}
     if request.method == "GET":
-        url = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/dealership-package/get-dealership-async"
-        # Get dealers from the URL
-        dealerships = get_dealers_from_cf(url)
+       # Get dealers from the URL
+        dealerships = get_dealers_from_cf(urld)
         # Concat all dealer's short name
         dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
         # Return a list of dealer short name
@@ -88,52 +93,76 @@ def get_dealerships(request):
 #get delaers by state
 def get_dealerships_by_st(request, state):
     if request.method == "GET":
-        url = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/dealership-package/get-dealership-async"
-        # Get dealers from the URL
-        dealerships = get_dealers_for_st(url,state)
+       # Get dealers from the URL
+        dealerships = get_dealers_for_st(urld,state)
         return render(request, 'djangoapp/index.html',{"dealerships":dealerships})
        
 
 #Get dealers by id    
 def get_dealerships_by_id(request, id):
     if request.method == "GET":
-        url = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/dealership-package/get-dealership-async"
-        # Get dealers from the URL
-        dealerships = get_dealers_for_id(url,id)
+      # Get dealers from the URL
+        dealerships = get_dealers_for_id(urld,id)
         models=CarModel.objects.all().values()
         return render(request, 'djangoapp/postreview.html',{"dealerships":dealerships,"models":models,"id":id})
 
 #View for reviews
-def get_dealer_review(request, dealership):
+def get_dealer_reviews_from_cf(request, dealership):
      if request.method == "GET":
         review=[]
-        url = 'https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/review-package/get-reviews'
-        review = get_review(url,dealership)
+        review = get_reviews(urlr,dealership)
         return render(request, 'djangoapp/review.html', {'review':review})
-     
+
+
+def get_review(request,dealer):
+    dealership_name = ''
+    reviews = get_reviews(urlr,dealer)
+    id=dealer
+    dealership_name = get_dealers_for_id(urld,dealer)[0].full_name
+ 
+    return render(request, 'djangoapp/dealer_details.html',{'reviews':reviews,
+                                                                                                'dealership_name':dealership_name,
+                                                                                                'id':id})
+
+
 #View for posting review
-def post_review(request,id):
-    models=CarModel.objects.all().values()
-    id=id
+def add_review(request,dealership):
+    dealership_name = get_dealers_for_id(urld,dealership)[0].full_name
+   
+    models = CarModel.objects.all().values()
+    id=dealership
+
     if request.method=='POST':
         json_review={}
         dealership= id
         purchase_date = request.POST['purchase_date']
+       
         car_model= request.POST['car_model']
-        if request.POST['purchase_date']:
+        car_make="Ford"
+        car_year=CarModel.objects.filter(name=car_model).values()
+        print(car_year)
+        if request.POST['purchase']:
             purchase= "Yes"
         else:
             purchase= "No"
         review_= request.POST['review']
-        name=request.user.username
-        review = DealerReview(dealership=dealership,name=name,purchase=purchase,\
-                                review=review_, purchase_date=purchase_date,car_model=car_model)
+        name = dealership_name
+        #name=request.user.username
+        review = DealerReview(dealership=dealership,name=name,purchase=purchase,car_make=car_make,\
+                                review=review_, purchase_date=purchase_date,car_year='2020',car_model=car_model,sentiment='na')
         json_= review.__dict__
         json_review['review']=json_
-        url="https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/review-package/post-review"
-        r = post_request(url,json_review)
-        return redirect('/djangoapp')
+        r = post_request(urlp,json_review)
+
+        reviews = get_reviews(urlr,dealership)
+        dealership_name = get_dealers_for_id(urld,dealership)[0].full_name
+        return render(request, 'djangoapp/dealer_details.html',{'reviews':reviews,
+                                                                                                    'dealership_name':dealership_name,
+                                                                                                    'id':dealership})
+            
+        
     
-    return render(request, 'djangoapp/postreview.html',{'models':models,'id':id})
+    return render(request, 'djangoapp/add_review.html',{'dealership_name':dealership_name,
+                                                                                                    'models':models,'id':dealership})
 
 

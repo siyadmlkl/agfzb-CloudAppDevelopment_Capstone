@@ -8,7 +8,7 @@ class CarMake(models.Model):
     description = models.CharField(null=False, max_length=100)
 
     def __str__(self) :
-        return 'Name: '+self.name+' Description: '+self.description
+        return self.name
 
 #Car Models Model
 class CarModel(models.Model):
@@ -20,10 +20,10 @@ class CarModel(models.Model):
     dealer_id = models.IntegerField(null=False)
     type = models.CharField(null=False,choices=choices, max_length=20)
     year=models.DateField()
-    make=models.ManyToManyField(CarMake)
+    make=models.ManyToManyField(CarMake, related_name='Makes')
 
     def __str__(self):
-        return "Model : "+self.name
+        return self.name
 
 #Dealer object class
 class CarDealer:
@@ -48,19 +48,22 @@ class CarDealer:
         self.zip = zip
 
     def __str__(self):
-        return "Dealer name: " + self.full_name
+        return "Name: " + self.full_name
 
 
 # Dealer review class
 class DealerReview():
-    def __init__(self, dealership, name, purchase, review, purchase_date, car_model):
+    def __init__(self, dealership, name, purchase, review,sentiment, car_year, car_make,car_model,purchase_date):
         # Required attributes
         self.dealership = dealership
         self.name = name
         self.purchase = purchase
         self.review = review
-        self.purchase_date = purchase_date
+        self.car_year= car_year
         self.car_model = car_model
+        self.car_make = car_make
+        self.sentiment=sentiment
+        self.purchase_date = purchase_date
 
     def __str__(self):
         return "Review: " + self.review

@@ -28,19 +28,6 @@ def get_request(url, **kwargs):
     json_data = json.loads(response.text)
     return json_data
 
-
-#Getting reviews
-def get_review(url, dealer):
-    review=[]
-    result= get_request(url, dealership=str(dealer))['reviews'][0]
-    if result:
-        review = DealerReview(dealership=result['dealership'],name=result['name'],purchase=result['purchase'],review=result['review'],
-                                           purchase_date=result['purchase_date'],car_make=result['car_make'],car_model=result['car_model'],
-                                            car_year=result['car_year'],sentiment=analyze_review_sentiments(result['review']),id=result['id'])
-  
-
-    return review
- 
 #Analyzing dealer review(AI)
 def analyze_review_sentiments(dealerreview):
     url = 'https://api.au-syd.natural-language-understanding.watson.cloud.ibm.com/instances/a5c10170-f890-4b15-803b-11625ae00e32'
@@ -50,11 +37,19 @@ def analyze_review_sentiments(dealerreview):
     natural_language_understanding.set_service_url(url) 
     response = natural_language_understanding.analyze( text=dealerreview,features=Features(sentiment=SentimentOptions(targets=[dealerreview]))).get_result() 
     label=json.dumps(response, indent=2) 
-
     label = response['sentiment']['document']['label'] 
 
     return label
 
+#Getting reviews
+def get_reviews(url, dealer):
+    reviews=[]
+    results= get_request(url, dealership=str(dealer))['reviews']
+    if results:
+        for result in results:
+            reviews.append(DealerReview(dealership=result['dealership'],name=result['name'],purchase=result['purchase'],review=result['review'],purchase_date=result['purchase_date'],
+                                            car_make=result['car_make'],car_model=result['car_model'],car_year=result['car_year'],sentiment=analyze_review_sentiments(result['review'])))
+    return reviews
 
 #dealers by state
 def get_dealers_for_st(url, st):
@@ -115,21 +110,7 @@ def get_dealers_from_cf(url, **kwargs):
     return results
 
 
-'''
-urld = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/review-package/get-reviews"
-review=get_review(urld,29)
-print(review.car_make)
-'''
-'''
-urld = "https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/dealership-package/get-dealership-async"
-details = get_dealers_for_st(urld,"TX")
-for detail in details:
 
-    print(detail.address)
-'''
-
-# Create a `post_request` to make HTTP POST requests
-# e.g., response = requests.post(url, params=kwargs, json=payload)
 def post_request(url, payload, **kwargs):
     print(kwargs)
     print("POST to {} ".format(url))
@@ -139,17 +120,7 @@ def post_request(url, payload, **kwargs):
     print("With status {} ".format(status_code))
     json_data = json.loads(response.text)
     return json_data
-'''
-json_={}
-review=DealerReview(
-car_make= "GMC",
-name="Henry",
-dealership= 45,
-review= "Great Service",
-purchase="True")
-json_['review']= review
-json_payload = DealerReview.to_json(json_)
-'''
+
 
 '''
 url="https://au-syd.functions.appdomain.cloud/api/v1/web/cc316789-97d4-4c05-8fa7-ffb7de77acbd/review-package/post-review"
